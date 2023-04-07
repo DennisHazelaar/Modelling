@@ -1,0 +1,276 @@
+#importing the data and packages
+import pandas as pd
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+import statsmodels.formula.api as sm
+import scipy.stats
+from statsmodels.imputation import mice
+df = pd.read_csv('webshop.csv')
+
+#removing the missing value's 
+# Check for missing values in the original dataset
+df.isnull().sum()
+# Create a variable which contains a clean dataframe without missing values
+cleandf = df.copy()
+# Remove missing values
+cleandf.dropna(inplace=True)
+# Double check for missing values in the cleaned copy
+cleandf.isnull().sum()
+
+#creating dummy variables 
+cleandf_Dummy1 = pd.get_dummies(cleandf['Device'])
+cleandf = pd.concat([cleandf, cleandf_Dummy1], axis=1)
+cleandf_Dummy2 = pd.get_dummies(cleandf['Find_website'])
+cleandf = pd.concat([cleandf, cleandf_Dummy2], axis=1)
+
+#dealing with outliers
+#first create a new dataset for the outliers
+cleandf_Outliers = cleandf.copy()
+#create a variable for the sample zise 
+n = len(cleandf_Outliers)
+
+#Creating single regression & outliers time spent on website
+sr1_TSOR = sm.ols('Purchase_Amount ~ Time_Spent_on_Website', data = cleandf_Outliers).fit()
+print(sr1_TSOR.summary())
+
+CooksD = sr1_TSOR.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers1 = cleandf_Outliers[cleandf_Outliers.Outlier == True]
+
+mask = cleandf_Outliers['Time_Spent_on_Website']==-999
+cleandf_Outliers = cleandf_Outliers[~mask]
+
+sr1_TSOR = sm.ols('Purchase_Amount ~ Time_Spent_on_Website', data = cleandf_Outliers).fit()
+print(sr1_TSOR.summary())
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+
+#Creating single regression & checking outliers number of products browsed
+SR2_NOPB = sm.ols('Purchase_Amount ~ Number_of_products_browsed', data = cleandf_Outliers).fit()
+print(SR2_NOPB.summary())
+
+CooksD = SR2_NOPB.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers2 = cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+
+#Creating single regression & checking outliers number pictures
+SR3_Pic = sm.ols('Purchase_Amount ~ Pictures', data = cleandf_Outliers).fit()
+print(SR3_Pic.summary())
+
+CooksD = SR3_Pic.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers3 =cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+
+#Creating single regression & checking outliers Shipping time
+SR4_ST = sm.ols('Purchase_Amount ~ Shipping_Time', data = cleandf_Outliers).fit()
+print(SR4_ST.summary())
+
+CooksD = SR4_ST.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers4 =cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+
+#Creating single regression & checking outliers review rating
+SR5_RR = sm.ols('Purchase_Amount ~ Review_rating', data = cleandf_Outliers).fit()
+print(SR5_RR.summary())
+
+CooksD = SR5_RR.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers5 =cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+
+#Creating single regression & checking outliers Ease of purchase
+SR6_EOP = sm.ols('Purchase_Amount ~ Ease_of_purchase', data = cleandf_Outliers).fit()
+print(SR6_EOP.summary())
+
+CooksD = SR6_EOP.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers6 =cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+
+#Creating single regression & checking outliers Device
+SR7_PC = sm.ols('Purchase_Amount ~ PC', data = cleandf_Outliers).fit()
+print(SR7_PC.summary())
+
+CooksD = SR7_PC.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers7 =cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+SR7_Mob = sm.ols('Purchase_Amount ~ Mobile', data = cleandf_Outliers).fit()
+print(SR7_Mob.summary())
+
+CooksD = SR7_Mob.get_influence().cooks_distance
+cleandf_Outliers['Outlier'] = CooksD[0] > 4/n
+cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers7_1 =cleandf_Outliers[cleandf_Outliers.Outlier == True]
+cleandf_Outliers = cleandf_Outliers.drop('Outlier', axis=1)
+
+#--------------------------------------------
+
+#Creating multiple regression found website
+MR8_FW = sm.ols('Purchase_Amount ~ Friends_or_Family + Search_Engine + Social_Media_Advertisement', data = cleandf_Outliers).fit()
+print(MR8_FW.summary())
+
+MR8_FWO = sm.ols('Purchase_Amount ~ Other + Search_Engine + Social_Media_Advertisement', data = cleandf_Outliers).fit()
+print(MR8_FWO.summary())
+
+
+#Creating single regression Age 
+SR9_age = sm.ols('Purchase_Amount ~ Age', data = cleandf_Outliers).fit()
+print(SR9_age.summary())
+
+#Checking for multicollinearity
+corr_matrix = cleandf_Outliers.corr()
+print(corr_matrix)
+
+MR10_MC_Check = sm.ols('Purchase_Amount ~ Number_of_products_browsed + Time_Spent_on_Website', data = cleandf_Outliers).fit()
+print(MR10_MC_Check.summary())
+
+
+#Checking for non-liniar relationship
+
+#Checking relationship time spent on website
+sns.regplot(x = 'Time_Spent_on_Website', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+#Checking relationship number of products browsed
+sns.regplot(x = 'Number_of_products_browsed', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+#Checking relationship pictures
+sns.regplot(x = 'Pictures', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+#Checking relationship shipping time
+sns.regplot(x = 'Shipping_Time', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+#Checking relationship review rating
+sns.regplot(x = 'Review_rating', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+#Checking relationship ease of products
+sns.regplot(x = 'Ease_of_purchase', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+#Checking relationship age
+sns.regplot(x = 'Age', y = 'Purchase_Amount', data = cleandf_Outliers, lowess = True)
+
+
+#polynomial transformation 
+Age2 = pow(cleandf_Outliers.Age,2)
+#comparing the linear model to polynomial model  
+SR9_age = sm.ols('Purchase_Amount ~ Age', data = cleandf_Outliers).fit()
+print(SR9_age.summary())
+polynomial_model = sm.ols('Purchase_Amount ~ Age + Age2', data = cleandf_Outliers).fit()
+print(polynomial_model.summary())
+
+
+#Create the eventual model for the APA table
+MR12_APAModel = sm.ols('Purchase_Amount ~  Age + Age2 + Time_Spent_on_Website + Number_of_products_browsed + Shipping_Time + Review_rating + Ease_of_purchase + PC + Ease_of_purchase + Friends_or_Family + Social_Media_Advertisement', data = cleandf_Outliers).fit()
+print(MR12_APAModel.summary())
+
+#The following code for creating APA style tables only works in Jupyterlab
+from stargazer.stargazer import Stargazer
+from IPython.core.display import HTML
+MR12_APAModel = sm.ols('Purchase_Amount ~  Age + Age2 + Time_Spent_on_Website + Number_of_products_browsed + Shipping_Time + Review_rating + Ease_of_purchase + PC + Ease_of_purchase + Friends_or_Family + Social_Media_Advertisement', data = cleandf_Outliers).fit()
+print(MR12_APAModel.summary())
+
+Table = Stargazer([MR12_APAModel])
+Table.title =('Model predict purchase amount')
+Table.show_model_numbers(False) 
+Table.significant_digits(2)
+Table.covariate_order(['Intercept', 'Age', 'Age2', 'Ease_of_purchase', 'Number_of_products_browsed', 'Review_rating', 'Shipping_Time', 'Time_Spent_on_Website', 'PC', 'Friends_or_Family', 'Social_Media_Advertisement'])
+Table.rename_covariates({'Ease_of_purchase':'Ease of purchase', 'Number_of_products_browsed' : 'Number of products browsed', 'Review_rating' : 'Review rating', 'Shipping_Time' : 'Shipping time', 'Time_Spent_on_Website' : 'Time spent on website', 'Friends_or_Family' : 'Friend or family', 'Search_Engine' : 'Search engine', 'Social_Media_Advertisement' : 'Social media advertisement'}) 
+
+HTML(Table.render_html())
+
+#standarization of variables
+Cleandf_Standardized = cleandf_Outliers.copy()
+Cleandf_Standardized[['Time_Spent_on_Website','Number_of_products_browsed', 'Shipping_Time', 'Review_rating', 'Ease_of_purchase', 'Age']] = StandardScaler().fit_transform(Cleandf_Standardized[['Time_Spent_on_Website','Number_of_products_browsed', 'Shipping_Time', 'Review_rating', 'Ease_of_purchase', 'Age']])
+
+#creating a model with the standardized variables
+MR13_model2 = sm.ols('Purchase_Amount ~  Age + Age2 + Time_Spent_on_Website + Number_of_products_browsed + Shipping_Time + Review_rating + Ease_of_purchase + PC + Ease_of_purchase + Friends_or_Family + Social_Media_Advertisement', data = Cleandf_Standardized).fit()
+print(MR13_model2.summary())
+
+#creating a APA table with two models
+Table = Stargazer([MR12_APAModel,MR13_model2])
+Table.title =('Model predict purchase amount')
+Table.show_model_numbers(False) 
+Table.significant_digits(2)
+Table.covariate_order(['Intercept', 'Age', 'Age2', 'Ease_of_purchase', 'Number_of_products_browsed', 'Review_rating', 'Shipping_Time', 'Time_Spent_on_Website', 'PC', 'Friends_or_Family', 'Social_Media_Advertisement'])
+Table.rename_covariates({'Ease_of_purchase':'Ease of purchase', 'Number_of_products_browsed' : 'Number of products browsed', 'Review_rating' : 'Review rating', 'Shipping_Time' : 'Shipping time', 'Time_Spent_on_Website' : 'Time spent on website', 'Friends_or_Family' : 'Friend or family', 'Search_Engine' : 'Search engine', 'Social_Media_Advertisement' : 'Social media advertisement'}) 
+HTML(Table.render_html())
+
+#predict a customer that's not in the dataset 
+#creating the variable Age2 as a column to the data frame
+cleandf_Outliers['Age2'] = cleandf_Outliers['Age']**2
+
+#calculate the Age 2 for the new customer
+new_customer_age = 35
+new_customer_age2 = new_customer_age ** 2
+
+New_customer = pd.DataFrame([[723,20, 3.4, 2.6, 4.5, 'Search_Engine' , 4, 35, 'PC', 0, 1, 1 , 0, 0,0, 1225]], columns = ['Time_Spent_on_Website', 'Number_of_products_browsed', 'Pictures', 'Shipping_Time', 'Review_rating', 'Find_website', 'Ease_of_purchase', 'Age', 'Device', 'Mobile', 'PC', 'Friends_or_Family', 'Other', 'Search_Engine', 'Social_Media_Advertisement', 'Age2'])
+New_customer['Age2'] = new_customer_age2
+
+print(MR12_APAModel.predict(New_customer))
+
+#Dealing with missing values
+Cleandf_With_NA = df.copy()
+Cleandf_With_NA = pd.get_dummies(Cleandf_With_NA, dummy_na=True)
+
+#removing outliers
+mask1 = Cleandf_With_NA['Time_Spent_on_Website']==-999
+Cleandf_With_NA = Cleandf_With_NA[~mask1]
+
+#Checking for multicollinearity
+corr_matrix1 = Cleandf_With_NA.corr()
+print(corr_matrix1)
+
+#Checking relationship time spent on website
+sns.regplot(x = 'Time_Spent_on_Website', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#Checking relationship number of products browsed
+sns.regplot(x = 'Number_of_products_browsed', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#Checking relationship pictures
+sns.regplot(x = 'Pictures', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#Checking relationship shipping time
+sns.regplot(x = 'Shipping_Time', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#Checking relationship review rating
+sns.regplot(x = 'Review_rating', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#Checking relationship ease of products
+sns.regplot(x = 'Ease_of_purchase', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#Checking relationship age
+sns.regplot(x = 'Age', y = 'Purchase_Amount', data = Cleandf_With_NA, lowess = True)
+
+#polynomial transformation 
+Age2 = pow(Cleandf_With_NA.Age,2)
+Cleandf_With_NA['Age2'] = Cleandf_With_NA['Age']**2
+
+#creating a dataset with only the variables that are needed for the model
+Cleandf_With_NA_VN = Cleandf_With_NA[['Purchase_Amount', 'Age', 'Age2', 'Time_Spent_on_Website', 'Number_of_products_browsed', 'Shipping_Time', 'Review_rating', 'Ease_of_purchase', 'Device_PC', 'Find_website_Friends_or_Family', 'Find_website_Social_Media_Advertisement']].copy()
+
+import statsmodels.imputation.mice as mice
+
+# create the MICE object using smf.ols as the modeling function
+imp = mice.MICEData(Cleandf_With_NA_VN)
+
+import statsmodels.api as sm
+# specify the model formula using the smf.ols function
+model_formula = "Purchase_Amount ~ Age + Age2 + Time_Spent_on_Website + Number_of_products_browsed + Shipping_Time + Review_rating + Ease_of_purchase + Device_PC + Find_website_Friends_or_Family + Find_website_Social_Media_Advertisement"
+model = mice.MICE(model_formula, model_class=sm.OLS, data=imp).fit()
+print(model.summary())
